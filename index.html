@@ -1,0 +1,397 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #FAF8F3;
+    --ink: #1A1814;
+    --ink2: #4A4640;
+    --ink3: #8A8680;
+    --sand: #EDE9E0;
+    --sand2: #D8D2C4;
+    --accent: #C85A2A;
+    --accent2: #E8A070;
+    --teal: #2A7A6A;
+  }
+  body { font-family: 'Georgia', serif; background: var(--cream); color: var(--ink); }
+  .app { display: flex; height: 680px; max-width: 1024px; margin: 0 auto; background: var(--cream); border-radius: 20px; overflow: hidden; border: 1px solid var(--sand2); }
+  .sidebar { width: 260px; min-width: 260px; background: var(--ink); display: flex; flex-direction: column; overflow: hidden; }
+  .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid #333; }
+  .sidebar-title { font-size: 22px; font-weight: normal; color: #FAF8F3; letter-spacing: -0.5px; }
+  .sidebar-sub { font-size: 11px; color: #888; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; font-family: 'Courier New', monospace; }
+  .decks-label { padding: 16px 20px 8px; font-size: 10px; color: #666; letter-spacing: 2.5px; text-transform: uppercase; font-family: 'Courier New', monospace; }
+  .deck-list { flex: 1; overflow-y: auto; padding: 0 10px; }
+  .deck-list::-webkit-scrollbar { width: 3px; }
+  .deck-list::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+  .deck-item { display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 12px; border-radius: 10px; cursor: pointer; margin-bottom: 3px; transition: background 0.15s; }
+  .deck-item:hover { background: #2a2a2a; }
+  .deck-item.active { background: var(--accent); }
+  .deck-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .deck-name { font-size: 14px; color: #E8E4DC; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .deck-count { font-size: 11px; color: #777; font-family: 'Courier New', monospace; flex-shrink: 0; }
+  .deck-item.active .deck-count { color: rgba(255,255,255,0.6); }
+  .deck-item.active .deck-name { color: #fff; }
+  .deck-del-btn { flex-shrink: 0; background: none; border: none; color: #555; cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 4px; transition: color 0.15s, background 0.15s; display: flex; align-items: center; }
+  .deck-del-btn:hover { color: #E24B4A; background: rgba(226,75,74,0.15); }
+  .deck-item.active .deck-del-btn { color: rgba(255,255,255,0.4); }
+  .deck-item.active .deck-del-btn:hover { color: #fff; background: rgba(255,255,255,0.15); }
+  .add-deck-btn { margin: 12px; padding: 10px; background: transparent; border: 1px dashed #444; border-radius: 10px; color: #777; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; font-family: 'Georgia', serif; }
+  .add-deck-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .top-bar { padding: 20px 28px 16px; border-bottom: 1px solid var(--sand2); display: flex; align-items: center; justify-content: space-between; }
+  .deck-title-area { flex: 1; }
+  .deck-main-title { font-size: 26px; font-weight: normal; color: var(--ink); letter-spacing: -0.5px; }
+  .deck-stats { font-size: 12px; color: var(--ink3); margin-top: 3px; font-family: 'Courier New', monospace; }
+  .top-actions { display: flex; gap: 10px; }
+  .btn-study { padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer; border: none; background: #2A7A6A; color: #fff; font-family: 'Georgia', serif; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: background 0.15s, transform 0.1s; }
+  .btn-study:hover { background: #1F6558; transform: translateY(-1px); }
+  .btn-study:active { transform: scale(0.97); }
+  .btn-add { padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer; border: none; background: #C85A2A; color: #fff; font-family: 'Georgia', serif; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: background 0.15s, transform 0.1s; }
+  .btn-add:hover { background: #A84820; transform: translateY(-1px); }
+  .btn-add:active { transform: scale(0.97); }
+  .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid var(--sand2); background: white; color: var(--ink2); transition: all 0.15s; font-family: 'Georgia', serif; }
+  .btn:hover { background: var(--sand); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+  .btn-primary:hover { background: #B04A1A; }
+  .btn-danger { background: #E24B4A; border-color: #E24B4A; color: white; }
+  .btn-danger:hover { background: #C33B3A; }
+  .view { display: none; flex: 1; overflow-y: auto; }
+  .view.active { display: flex; flex-direction: column; }
+  .card-grid { padding: 20px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .mini-card { background: white; border: 1px solid var(--sand2); border-radius: 14px; padding: 16px; cursor: pointer; transition: all 0.2s; position: relative; min-height: 100px; }
+  .mini-card:hover { transform: translateY(-2px); border-color: var(--accent2); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+  .mini-card-front { font-size: 14px; color: var(--ink); line-height: 1.4; font-weight: bold; padding-right: 20px; }
+  .mini-card-back { font-size: 12px; color: var(--ink3); margin-top: 6px; line-height: 1.4; }
+  .mini-card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .tag { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-family: 'Courier New', monospace; }
+  .mini-card-del { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--sand2); cursor: pointer; font-size: 16px; line-height: 1; transition: color 0.15s; padding: 2px; }
+  .mini-card-del:hover { color: #E24B4A; }
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
+  .empty-text { font-size: 16px; color: var(--ink2); }
+  .empty-sub { font-size: 13px; margin-top: 6px; color: var(--ink3); font-family: 'Courier New', monospace; }
+  .study-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; gap: 24px; }
+  .progress-bar-wrap { width: 100%; max-width: 500px; }
+  .progress-label { font-size: 12px; color: var(--ink3); font-family: 'Courier New', monospace; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .progress-bar { height: 4px; background: var(--sand2); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+  .flip-scene { width: 500px; height: 280px; perspective: 1200px; cursor: pointer; }
+  .flip-card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+  .flip-card.flipped { transform: rotateY(180deg); }
+  .flip-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; }
+  .flip-front { background: white; border: 1.5px solid var(--sand2); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+  .flip-back { background: var(--ink); border: 1.5px solid #333; transform: rotateY(180deg); }
+  .flip-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; font-family: 'Courier New', monospace; margin-bottom: 14px; color: var(--ink3); }
+  .flip-back .flip-label { color: #666; }
+  .flip-text { font-size: 22px; color: var(--ink); line-height: 1.4; }
+  .flip-back .flip-text { color: #FAF8F3; font-size: 20px; }
+  .flip-hint { font-size: 11px; color: var(--sand2); margin-top: 16px; font-family: 'Courier New', monospace; }
+  .flip-card-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+  .study-controls { display: flex; gap: 12px; align-items: center; }
+  .ctrl-btn { padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer; border: 1px solid var(--sand2); background: white; color: var(--ink2); transition: all 0.15s; font-family: 'Georgia', serif; }
+  .ctrl-btn:hover { background: var(--sand); }
+  .ctrl-btn.good { background: var(--teal); border-color: var(--teal); color: white; }
+  .ctrl-btn.good:hover { background: #1F6558; }
+  .ctrl-btn.again { background: #E24B4A; border-color: #E24B4A; color: white; }
+  .ctrl-btn.again:hover { background: #C33B3A; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 20px; padding: 28px; width: 500px; max-width: 95%; }
+  .modal h3 { font-size: 20px; font-weight: normal; margin-bottom: 12px; color: var(--ink); }
+  .modal-warn { font-size: 13px; color: var(--ink3); margin-bottom: 20px; font-family: 'Courier New', monospace; line-height: 1.6; }
+  .modal-preview { background: var(--cream); border: 1px solid var(--sand2); border-radius: 10px; padding: 12px 14px; margin-bottom: 20px; }
+  .modal-preview-front { font-size: 14px; font-weight: bold; color: var(--ink); }
+  .modal-preview-back { font-size: 12px; color: var(--ink3); margin-top: 4px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); font-family: 'Courier New', monospace; display: block; margin-bottom: 6px; }
+  .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--sand2); border-radius: 8px; font-size: 14px; font-family: 'Georgia', serif; color: var(--ink); background: var(--cream); outline: none; resize: vertical; transition: border-color 0.15s; }
+  .form-input:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+  .deck-color-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; }
+  .color-swatch.selected { border-color: var(--ink); transform: scale(1.15); }
+</style>
+
+<h2 class="sr-only"></h2>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Flashcards</div>
+      <div class="sidebar-sub">I will get a 100!</div>
+    </div>
+    <div class="decks-label">My Decks</div>
+    <div class="deck-list" id="deckList"></div>
+    <button class="add-deck-btn" onclick="openNewDeckModal()">
+      <i class="ti ti-plus" aria-hidden="true"></i> New Deck
+    </button>
+  </div>
+
+  <div class="main">
+    <div class="top-bar">
+      <div class="deck-title-area">
+        <div class="deck-main-title" id="mainTitle">Select a Deck</div>
+        <div class="deck-stats" id="deckStats"></div>
+      </div>
+      <div class="top-actions" id="topActions"></div>
+    </div>
+    <div class="view active" id="viewCards"><div id="cardsContent"></div></div>
+    <div class="view" id="viewStudy">
+      <div class="study-area">
+        <div class="progress-bar-wrap">
+          <div class="progress-label">
+            <span id="studyProgressLabel">Card 1 of 1</span>
+            <span id="studyScore">✓ 0  ✗ 0</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        </div>
+        <div class="flip-scene" onclick="flipCard()" id="flipScene">
+          <div class="flip-card" id="flipCard">
+            <div class="flip-face flip-front">
+              <div class="flip-label">Front</div>
+              <div class="flip-text" id="cardFront">—</div>
+              <div class="flip-card-tags" id="cardFrontTags"></div>
+              <div class="flip-hint">Tap to reveal →</div>
+            </div>
+            <div class="flip-face flip-back">
+              <div class="flip-label">Back</div>
+              <div class="flip-text" id="cardBack">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="study-controls" id="studyControls"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Deck Modal -->
+<div class="modal-overlay" id="deckModal">
+  <div class="modal">
+    <h3>New Deck</h3>
+    <div class="form-group">
+      <label class="form-label">Deck Name</label>
+      <input class="form-input" id="deckNameInput" placeholder="e.g. Biology, Spanish Vocab…" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Color</label>
+      <div class="deck-color-pick" id="colorPick"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDeckModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createDeck()">Create Deck</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Deck Confirm Modal -->
+<div class="modal-overlay" id="deleteDeckModal">
+  <div class="modal">
+    <h3>Delete Deck</h3>
+    <p class="modal-warn" id="deleteDeckMsg"></p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDeleteDeckModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeleteDeck()">Delete Deck</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Card Confirm Modal -->
+<div class="modal-overlay" id="deleteCardModal">
+  <div class="modal">
+    <h3>Delete Card</h3>
+    <p class="modal-warn">This card will be permanently deleted.</p>
+    <div class="modal-preview">
+      <div class="modal-preview-front" id="deleteCardFront"></div>
+      <div class="modal-preview-back" id="deleteCardBack"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDeleteCardModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeleteCard()">Delete Card</button>
+    </div>
+  </div>
+</div>
+
+<!-- Card Edit Modal -->
+<div class="modal-overlay" id="cardModal">
+  <div class="modal">
+    <h3 id="cardModalTitle">Add Card</h3>
+    <div class="form-group">
+      <label class="form-label">Front</label>
+      <textarea class="form-input" id="cardFrontInput" rows="3" placeholder="Question or term…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Back</label>
+      <textarea class="form-input" id="cardBackInput" rows="3" placeholder="Answer or definition…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tags (comma-separated)</label>
+      <input class="form-input" id="cardTagsInput" placeholder="e.g. chapter1, important, review" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeCardModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCard()">Save Card</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS=['#C85A2A','#2A7A6A','#3A5CA8','#8A4AAA','#AA8A2A','#AA3A5A','#4A7A3A','#5A5A8A'];
+const TAG_COLORS=['#FEE9D4','#D4EEE9','#D4DFF4','#EBD4F4','#F4EAD4','#F4D4E2','#D8EDD4','#D4D4ED'];
+const TAG_TEXT=['#8A3A1A','#1A5A4A','#2A3C78','#5A2A7A','#7A5A1A','#7A1A3A','#2A5A1A','#3A3A6A'];
+
+let decks=[
+  {id:1,name:'Biology',color:'#2A7A6A',cards:[
+    {id:1,front:'What is osmosis?',back:'Movement of water molecules across a semipermeable membrane from low to high solute concentration.',tags:['chapter2','important']},
+    {id:2,front:'Define mitosis',back:'Cell division producing two genetically identical daughter cells.',tags:['chapter1']},
+    {id:3,front:'What is ATP?',back:'Adenosine triphosphate — the primary energy currency of cells.',tags:['chapter3','energy']},
+  ]},
+  {id:2,name:'Spanish Vocab',color:'#C85A2A',cards:[
+    {id:1,front:'hablar',back:'to speak',tags:['verbs','basics']},
+    {id:2,front:'el perro',back:'the dog',tags:['nouns','animals']},
+  ]},
+];
+let activeDeckId=null,studyQueue=[],studyIdx=0,studyGood=0,studyBad=0,cardFlipped=false,editingCardId=null,selectedColor=COLORS[0],nextDeckId=3,nextCardId=10,deletingDeckId=null,deletingCardId=null;
+
+function getTagStyle(tag){let h=0;for(let c of tag)h=(h*31+c.charCodeAt(0))%COLORS.length;return `background:${TAG_COLORS[h]};color:${TAG_TEXT[h]}`;}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function renderDecks(){
+  document.getElementById('deckList').innerHTML=decks.map(d=>`
+    <div class="deck-item ${d.id===activeDeckId?'active':''}" onclick="selectDeck(${d.id})">
+      <div class="deck-dot" style="background:${d.color}"></div>
+      <div class="deck-name">${escHtml(d.name)}</div>
+      <div class="deck-count">${d.cards.length}</div>
+      <button class="deck-del-btn" onclick="event.stopPropagation();openDeleteDeckModal(${d.id})" aria-label="Delete deck">
+        <i class="ti ti-trash" style="font-size:14px" aria-hidden="true"></i>
+      </button>
+    </div>`).join('');
+}
+
+function selectDeck(id){activeDeckId=id;showView('viewCards');renderDecks();renderMainArea();}
+
+function renderMainArea(){
+  const deck=decks.find(d=>d.id===activeDeckId);
+  if(!deck){
+    document.getElementById('mainTitle').textContent='Select a Deck';
+    document.getElementById('deckStats').textContent='';
+    document.getElementById('topActions').innerHTML='';
+    document.getElementById('cardsContent').innerHTML=`<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-text">Choose a deck from the sidebar</div><div class="empty-sub">or create a new one below</div></div>`;
+    return;
+  }
+  document.getElementById('mainTitle').textContent=deck.name;
+  document.getElementById('deckStats').textContent=`${deck.cards.length} card${deck.cards.length!==1?'s':''}`;
+  document.getElementById('topActions').innerHTML=`
+    <button class="btn-study" onclick="startStudy()"><i class="ti ti-player-play" aria-hidden="true" style="font-size:15px"></i> Study</button>
+    <button class="btn-add" onclick="openCardModal()"><i class="ti ti-plus" aria-hidden="true" style="font-size:15px"></i> Add Card</button>`;
+  renderCards(deck);
+}
+
+function renderCards(deck){
+  const el=document.getElementById('cardsContent');
+  if(!deck.cards.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🃏</div><div class="empty-text">No cards yet</div><div class="empty-sub">Click "Add Card" to get started</div></div>`;return;}
+  el.innerHTML=`<div class="card-grid">${deck.cards.map(c=>`
+    <div class="mini-card" onclick="openEditCard(${c.id})">
+      <button class="mini-card-del" onclick="event.stopPropagation();openDeleteCardModal(${c.id})" aria-label="Delete card">×</button>
+      <div class="mini-card-front">${escHtml(c.front)}</div>
+      <div class="mini-card-back">${escHtml(c.back)}</div>
+      ${c.tags.length?`<div class="mini-card-tags">${c.tags.map(t=>`<span class="tag" style="${getTagStyle(t)}">${escHtml(t)}</span>`).join('')}</div>`:''}
+    </div>`).join('')}</div>`;
+}
+
+function startStudy(){
+  const deck=decks.find(d=>d.id===activeDeckId);
+  if(!deck||!deck.cards.length)return;
+  studyQueue=[...deck.cards].sort(()=>Math.random()-0.5);
+  studyIdx=0;studyGood=0;studyBad=0;
+  showView('viewStudy');renderStudyCard();
+}
+
+function renderStudyCard(){
+  const total=studyQueue.length;
+  if(studyIdx>=total){
+    document.getElementById('flipScene').style.display='none';
+    document.getElementById('studyControls').innerHTML=`<div style="text-align:center"><div style="font-size:28px;font-weight:normal;margin-bottom:8px">Session Complete!</div><p style="color:#8A8680;font-family:'Courier New',monospace;font-size:13px">✓ ${studyGood} correct &nbsp;&nbsp; ✗ ${studyBad} to review</p><button class="btn-study" style="margin:16px auto 8px;display:flex" onclick="startStudy()">Study Again</button><button class="btn" style="margin:0 auto;display:block" onclick="backToCards()">Back to Cards</button></div>`;
+    return;
+  }
+  document.getElementById('flipScene').style.display='';
+  const c=studyQueue[studyIdx];
+  cardFlipped=false;
+  document.getElementById('flipCard').classList.remove('flipped');
+  document.getElementById('cardFront').textContent=c.front;
+  document.getElementById('cardBack').textContent=c.back;
+  document.getElementById('cardFrontTags').innerHTML=c.tags.map(t=>`<span class="tag" style="${getTagStyle(t)}">${escHtml(t)}</span>`).join('');
+  document.getElementById('progressFill').style.width=Math.round((studyIdx/total)*100)+'%';
+  document.getElementById('studyProgressLabel').textContent=`Card ${studyIdx+1} of ${total}`;
+  document.getElementById('studyScore').textContent=`✓ ${studyGood}   ✗ ${studyBad}`;
+  document.getElementById('studyControls').innerHTML=`
+    <button class="ctrl-btn" onclick="prevCard()"><i class="ti ti-arrow-left"></i></button>
+    <button class="ctrl-btn again" onclick="markCard(false)">Again</button>
+    <button class="ctrl-btn good" onclick="markCard(true)">Got it ✓</button>
+    <button class="ctrl-btn" onclick="nextCard()"><i class="ti ti-arrow-right"></i></button>`;
+}
+
+function flipCard(){cardFlipped=!cardFlipped;document.getElementById('flipCard').classList.toggle('flipped',cardFlipped);}
+function nextCard(){studyIdx=Math.min(studyIdx+1,studyQueue.length);renderStudyCard();}
+function prevCard(){studyIdx=Math.max(studyIdx-1,0);renderStudyCard();}
+function markCard(good){if(good)studyGood++;else studyBad++;nextCard();}
+function backToCards(){showView('viewCards');renderMainArea();}
+
+function openNewDeckModal(){document.getElementById('deckNameInput').value='';selectedColor=COLORS[0];renderColorPick();document.getElementById('deckModal').classList.add('open');setTimeout(()=>document.getElementById('deckNameInput').focus(),100);}
+function closeDeckModal(){document.getElementById('deckModal').classList.remove('open');}
+function renderColorPick(){document.getElementById('colorPick').innerHTML=COLORS.map(c=>`<div class="color-swatch ${c===selectedColor?'selected':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`).join('');}
+function selectColor(c){selectedColor=c;renderColorPick();}
+function createDeck(){const name=document.getElementById('deckNameInput').value.trim();if(!name)return;const deck={id:nextDeckId++,name,color:selectedColor,cards:[]};decks.push(deck);closeDeckModal();selectDeck(deck.id);}
+
+function openDeleteDeckModal(id){
+  deletingDeckId=id;
+  const deck=decks.find(d=>d.id===id);
+  document.getElementById('deleteDeckMsg').textContent=`"${deck.name}" has ${deck.cards.length} card${deck.cards.length!==1?'s':''}. This will permanently delete the deck and all its cards.`;
+  document.getElementById('deleteDeckModal').classList.add('open');
+}
+function closeDeleteDeckModal(){document.getElementById('deleteDeckModal').classList.remove('open');deletingDeckId=null;}
+function confirmDeleteDeck(){
+  if(deletingDeckId===null)return;
+  decks=decks.filter(d=>d.id!==deletingDeckId);
+  if(activeDeckId===deletingDeckId)activeDeckId=null;
+  closeDeleteDeckModal();renderDecks();renderMainArea();
+}
+
+function openDeleteCardModal(cid){
+  const deck=decks.find(d=>d.id===activeDeckId);
+  const card=deck.cards.find(c=>c.id===cid);
+  if(!card)return;
+  deletingCardId=cid;
+  document.getElementById('deleteCardFront').textContent=card.front;
+  document.getElementById('deleteCardBack').textContent=card.back;
+  document.getElementById('deleteCardModal').classList.add('open');
+}
+function closeDeleteCardModal(){document.getElementById('deleteCardModal').classList.remove('open');deletingCardId=null;}
+function confirmDeleteCard(){
+  if(deletingCardId===null)return;
+  const deck=decks.find(d=>d.id===activeDeckId);
+  deck.cards=deck.cards.filter(c=>c.id!==deletingCardId);
+  closeDeleteCardModal();renderDecks();renderMainArea();
+}
+
+function openCardModal(){editingCardId=null;document.getElementById('cardModalTitle').textContent='Add Card';document.getElementById('cardFrontInput').value='';document.getElementById('cardBackInput').value='';document.getElementById('cardTagsInput').value='';document.getElementById('cardModal').classList.add('open');setTimeout(()=>document.getElementById('cardFrontInput').focus(),100);}
+function openEditCard(cid){const deck=decks.find(d=>d.id===activeDeckId);const card=deck.cards.find(c=>c.id===cid);if(!card)return;editingCardId=cid;document.getElementById('cardModalTitle').textContent='Edit Card';document.getElementById('cardFrontInput').value=card.front;document.getElementById('cardBackInput').value=card.back;document.getElementById('cardTagsInput').value=card.tags.join(', ');document.getElementById('cardModal').classList.add('open');setTimeout(()=>document.getElementById('cardFrontInput').focus(),100);}
+function closeCardModal(){document.getElementById('cardModal').classList.remove('open');}
+function saveCard(){
+  const front=document.getElementById('cardFrontInput').value.trim();
+  const back=document.getElementById('cardBackInput').value.trim();
+  const tags=document.getElementById('cardTagsInput').value.split(',').map(t=>t.trim()).filter(Boolean);
+  if(!front||!back)return;
+  const deck=decks.find(d=>d.id===activeDeckId);
+  if(editingCardId!==null){const card=deck.cards.find(c=>c.id===editingCardId);if(card){card.front=front;card.back=back;card.tags=tags;}}
+  else{deck.cards.push({id:nextCardId++,front,back,tags});}
+  closeCardModal();renderDecks();renderMainArea();
+}
+
+document.getElementById('deckModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDeckModal();});
+document.getElementById('deleteDeckModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDeleteDeckModal();});
+document.getElementById('deleteCardModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDeleteCardModal();});
+document.getElementById('cardModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeCardModal();});
+
+renderDecks();selectDeck(1);
+</script>
